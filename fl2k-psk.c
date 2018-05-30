@@ -23,6 +23,10 @@ uint32_t fl2k_dev_idx = 0;
 // Catches ^C and stops
 static void sighandler(int signum) {
 	cout << "Signal caught, exiting!" << endl;
+	
+	fl2k_stop_tx(fl2k_dev);
+	fl2k_close(fl2k_dev);
+
 	exit(0);
 }
 
@@ -62,25 +66,11 @@ void attach_sighandlers() {
 	sigaction(SIGPIPE, &sigign, nullptr);
 }
 
-
-int main(int argc, char **argv) {
-	uint32_t freq_carrier = 14000000;
-	uint32_t samplerate = freq_carrier * 2; // sample rate twice the frequency gives the smoothest output (TODO: experiment)
-
-	attach_sighandlers();
-	init_txbuffer();
-	fl2k_open(&fl2k_dev, fl2k_dev_idx);
-	
-	if (!fl2k_dev) {
-		cout << "Failed to open fl2k device #" << fl2k_dev_idx << endl;
-		exit(0);
-	}
-	cout << "Opened device" << endl;
-
-	int r = fl2k_start_tx(fl2k_dev, fl2k_callback, nullptr, 0);
+void set_freq_carrier(uint32_t freq) {
+	uint32_t samplerate = freq * 2; // sample rate twice the frequency gives the smoothest output (TODO: experiment)
 
 	// Set the sample rate
-	r = fl2k_set_sample_rate(fl2k_dev, samplerate);
+	int r = fl2k_set_sample_rate(fl2k_dev, samplerate);
 	if (r < 0) {
 		cout << "WARNING: Failed to set sample rate. " << r << endl;
 	}
@@ -88,6 +78,45 @@ int main(int argc, char **argv) {
 	/* read back actual frequency */
 	samplerate = fl2k_get_sample_rate(fl2k_dev);
 	cout << "Actual sample rate = " << samplerate << endl;
+}
+
+
+int main(int argc, char **argv) {
+	attach_sighandlers();
+	init_txbuffer();
+	fl2k_open(&fl2k_dev, fl2k_dev_idx);
+	
+	if(!fl2k_dev) {
+		cout << "Failed to open fl2k device #" << fl2k_dev_idx << endl;
+	}
+	else {
+		cout << "Opened device" << endl;
+	
+		int r = fl2k_start_tx(fl2k_dev, fl2k_callback, nullptr, 0);
+		set_freq_carrier(14000000);
+	}
+
+	cout << "Press u,d,q to raise or lower frequency, or quit: " << flush;
+	char c;
+	while(cin.get(c)) {
+		switch(c) {
+		case 'u':
+			set_freq_carrier(fl2k_get_sample_rate(fl2k_dev) + 1000000);
+			break;
+		case 'd':
+			set_freq_carrier(fl2k_get_sample_rate(fl2k_dev) - 1000000);
+			break;
+		case 'q':
+			exit(0);
+			break;
+		default:
+			break;
+		}
+		
+		cin.ignore();
+		cout << "> " << flush;
+	}
+
 
 	return 0;
 }
