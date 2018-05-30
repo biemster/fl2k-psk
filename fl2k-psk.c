@@ -49,12 +49,25 @@ void init_txbuffer() {
 	}
 }
 
+void attach_sighandlers() {
+	struct sigaction sigact, sigign;
+	
+ 	sigact.sa_handler = sighandler;
+	sigemptyset(&sigact.sa_mask);
+	sigact.sa_flags = 0;
+	sigign.sa_handler = SIG_IGN;
+	sigaction(SIGINT, &sigact, nullptr);
+	sigaction(SIGTERM, &sigact, nullptr);
+	sigaction(SIGQUIT, &sigact, nullptr);
+	sigaction(SIGPIPE, &sigign, nullptr);
+}
+
 
 int main(int argc, char **argv) {
-	struct sigaction sigact, sigign;
 	uint32_t freq_carrier = 14000000;
 	uint32_t samplerate = freq_carrier * 2; // sample rate twice the frequency gives the smoothest output (TODO: experiment)
 
+	attach_sighandlers();
 	init_txbuffer();
 	fl2k_open(&fl2k_dev, fl2k_dev_idx);
 	
@@ -75,15 +88,6 @@ int main(int argc, char **argv) {
 	/* read back actual frequency */
 	samplerate = fl2k_get_sample_rate(fl2k_dev);
 	cout << "Actual sample rate = " << samplerate << endl;
-	
-	sigact.sa_handler = sighandler;
-	sigemptyset(&sigact.sa_mask);
-	sigact.sa_flags = 0;
-	sigign.sa_handler = SIG_IGN;
-	sigaction(SIGINT, &sigact, nullptr);
-	sigaction(SIGTERM, &sigact, nullptr);
-	sigaction(SIGQUIT, &sigact, nullptr);
-	sigaction(SIGPIPE, &sigign, nullptr);
 
 	return 0;
 }
