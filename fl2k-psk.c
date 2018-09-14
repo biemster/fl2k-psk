@@ -77,7 +77,7 @@ void set_freq_carrier(uint32_t freq) {
 
 	/* read back actual frequency */
 	samplerate = fl2k_get_sample_rate(fl2k_dev);
-	cout << "Actual sample rate = " << samplerate << endl;
+	cout << "Actual {sample rate,frequency} = {" << samplerate << "," << samplerate/2 << "}" << endl;
 }
 
 
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
 		cout << "Opened device" << endl;
 	
 		int r = fl2k_start_tx(fl2k_dev, fl2k_callback, nullptr, 0);
-		set_freq_carrier(14000000);
+		set_freq_carrier(28000000);
 	}
 
 	cout << "Press u,d,q to raise or lower frequency, or quit: " << flush;
@@ -101,10 +101,10 @@ int main(int argc, char **argv) {
 	while(cin.get(c)) {
 		switch(c) {
 		case 'u':
-			set_freq_carrier(fl2k_get_sample_rate(fl2k_dev) + 1000000);
+			set_freq_carrier((fl2k_get_sample_rate(fl2k_dev) /2) +1000000);
 			break;
 		case 'd':
-			set_freq_carrier(fl2k_get_sample_rate(fl2k_dev) - 1000000);
+			set_freq_carrier((fl2k_get_sample_rate(fl2k_dev) /2) -1000000);
 			break;
 		case 'q':
 			exit(0);

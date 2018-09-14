@@ -5,7 +5,7 @@ built on initial work in https://github.com/peterbmarks/fl2k and https://osmocom
 sudo apt-get install libusb-1.0-0-dev
 
 ###### increase usb buffer size
-On Ubuntu: $ sudo sh -c 'echo 1000 > /sys/module/usbcore/parameters/usbfs_memory_mb'
+On Ubuntu: $ sudo sh -c 'echo 0 > /sys/module/usbcore/parameters/usbfs_memory_mb'
 
 ###### install udev rule to allow non root users to access the device
 $ sudo cp osmo-fl2k.rules /etc/udev/rules.d/
