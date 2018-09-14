@@ -2,7 +2,7 @@
  * osmo-fl2k, turns FL2000-based USB 3.0 to VGA adapters into
  * low cost DACs
  * 
- * On Ubuntu: sudo sh -c 'echo 1000 > /sys/module/usbcore/parameters/usbfs_memory_mb'
+ * On Ubuntu: sudo sh -c 'echo 0 > /sys/module/usbcore/parameters/usbfs_memory_mb'
  *
  */
 
