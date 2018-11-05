@@ -18,9 +18,12 @@
 								// 17 * 0.70710678 = 12.02.... keeps rounding error low and low signal keeps rest of the spectrum relatively clean
 #define SIGNAL_MIN -SIGNAL_MAX
 #define SIGNAL_FREQ 28000000
-#define SF_RATIO 4				// {2,4,8} samplerate / signal frequency ratio (max sample rate is about 140 MS/s on USB3)
+#define SF_RATIO 4				// {2,4,6,8,10} samplerate / signal frequency ratio (max sample rate is about 140 MS/s on USB3)
 
-#define SIN_1_4_PI 0.70710678		// sin(1/4*pi)
+#define SIN_1_4_PI 0.707106781		// sin(1/4*pi)
+#define SIN_1_6_PI 0.500000000		// sin(1/6*pi)
+#define SIN_1_10_PI 0.309016994		// sin(1/10*pi)
+#define SIN_3_10_PI 0.809016994		// sin(3/10*pi)
 
 int8_t *tx_buffer = nullptr;
 int phase_curr = 0;
@@ -52,15 +55,24 @@ void fl2k_callback(fl2k_data_info_t *data_info) {
 
 void init_txbuffer() {
 	int8_t sin14pi = (int8_t)(SIGNAL_MAX * SIN_1_4_PI);
+	int8_t sin16pi = (int8_t)(SIGNAL_MAX * SIN_1_6_PI);
+	int8_t sin110pi = (int8_t)(SIGNAL_MAX * SIN_1_10_PI);
+	int8_t sin310pi = (int8_t)(SIGNAL_MAX * SIN_3_10_PI);
 	map<int,vector<int8_t>> sines;
-	sines[2] = {SIGNAL_MIN, SIGNAL_MAX};
-	sines[4] = {0, SIGNAL_MIN, 0, SIGNAL_MAX};
-	sines[8] = {0, (int8_t)-sin14pi, SIGNAL_MIN, (int8_t)-sin14pi, 0, sin14pi, SIGNAL_MAX, sin14pi};
+	sines[2] = {SIGNAL_MAX, SIGNAL_MIN};
+	sines[4] = {0, SIGNAL_MAX, 0, SIGNAL_MIN, 0, SIGNAL_MAX};
+	sines[6] = {sin16pi, SIGNAL_MAX, sin16pi, (int8_t)-sin16pi, SIGNAL_MIN, (int8_t)-sin16pi, sin16pi, SIGNAL_MAX, sin16pi};
+	sines[8] = {0, sin14pi, SIGNAL_MAX, sin14pi, 0, (int8_t)-sin14pi, SIGNAL_MIN, (int8_t)-sin14pi, 0, sin14pi, SIGNAL_MAX, sin14pi, 0};
+	sines[10] = {sin110pi, sin310pi, SIGNAL_MAX, sin310pi, sin110pi, (int8_t)-sin110pi, (int8_t)-sin310pi, SIGNAL_MIN, (int8_t)-sin310pi, (int8_t)-sin110pi, sin110pi, sin310pi, SIGNAL_MAX, sin310pi, sin110pi};
 
 	tx_buffer = (int8_t*)malloc(FL2K_BUF_LEN);
 	auto sine = sines[SF_RATIO];
+	int phase_shift = 0;
 	for(int i = 0; i < FL2K_BUF_LEN; i++) {
-		tx_buffer[i] = sine[i % SF_RATIO];
+		if(SF_RATIO == 4 && !(i%40000)) {
+			phase_shift = !phase_shift ? 2 : 0;
+		}
+		tx_buffer[i] = sine[(i % SF_RATIO) +phase_shift];
 	}
 }
 
